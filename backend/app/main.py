@@ -28,6 +28,16 @@ app.add_middleware(
 )
 
 
+@app.exception_handler(Exception)
+async def unexpected_error(request, exc: Exception):
+    """Turn crashes into a readable JSON error instead of a bare 500 page."""
+    from fastapi.responses import JSONResponse
+
+    log.exception("Unhandled error on %s", request.url.path)
+    message = f"{type(exc).__name__}: {exc}"[:300]
+    return JSONResponse(status_code=500, content={"detail": f"Server error. {message}"})
+
+
 # ---- dependencies (overridable in tests) ---------------------------------- #
 @lru_cache
 def get_store() -> VectorStore:
